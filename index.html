@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#ff6b6b">
+<base href="./">
+<title>OCR Text Extractor</title>
+<style>
+:root {
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffd166;
+  --dark: #1a1a2e;
+  --light: #f7f7f7;
+  --shadow: 5px 5px 0px #000;
+}
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+body { background:var(--light); color:var(--dark); padding:1rem; min-height:100vh; }
+header {
+  background:var(--primary); color:var(--light);
+  border:3px solid var(--dark); box-shadow:var(--shadow);
+  border-radius:10px; padding:1rem; text-align:center; margin-bottom:1.5rem;
+}
+.card {
+  background:white; border:3px solid var(--dark); border-radius:10px;
+  box-shadow:var(--shadow); padding:1.5rem; margin-bottom:1.5rem;
+}
+.button-group { display:flex; flex-direction:column; gap:1rem; }
+button {
+  padding:1rem; border:3px solid var(--dark); border-radius:8px; font-weight:bold;
+  box-shadow:var(--shadow); transition:all 0.2s ease; cursor:pointer;
+}
+button.primary { background:var(--primary); color:var(--light); }
+button.accent { background:var(--accent); }
+button:hover { transform:translate(2px,2px); box-shadow:3px 3px 0 #000; }
+button:active { transform:translate(4px,4px); box-shadow:1px 1px 0 #000; }
+button:disabled { background:#ccc; color:#555; cursor:not-allowed; }
+#cameraInput,#fileInput { display:none; }
+.preview-container { display:flex; flex-direction:column; align-items:center; gap:1rem; }
+#imagePreview { max-width:100%; max-height:300px; border:3px solid var(--dark); border-radius:8px; box-shadow:var(--shadow); }
+.status {
+  text-align:center; padding:0.5rem; border:2px solid var(--dark); border-radius:5px;
+  background:var(--accent); font-weight:bold; margin:1rem 0;
+}
+#extractedText {
+  width:100%; min-height:180px; padding:1rem; border:3px solid var(--dark);
+  border-radius:8px; box-shadow:var(--shadow); resize:vertical; white-space:pre-wrap;
+}
+footer { text-align:center; color:#666; margin-top:1rem; font-size:0.8rem; }
+@media(min-width:768px){body{max-width:600px;margin:0 auto;} .button-group{flex-direction:row;} button{flex:1;}}
+</style>
+</head>
+<body>
+<header>
+  <h1>📷 OCR Text Extractor</h1>
+  <p>Upload or capture, extract & translate text instantly</p>
+</header>
+
+<main>
+  <div class="card">
+    <div class="button-group">
+      <button id="cameraButton" class="primary">Take Photo</button>
+      <button id="uploadButton" class="accent">Upload from Library</button>
+      <!-- Camera opens camera -->
+      <input type="file" id="cameraInput" accept="image/*" capture="environment">
+      <!-- Upload only opens photo library -->
+      <input type="file" id="fileInput" accept="image/*">
+    </div>
+  </div>
+
+  <div class="card preview-container">
+    <img id="imagePreview" class="hidden" alt="Preview">
+    <div id="noPreview" class="status">No image selected</div>
+  </div>
+
+  <div class="card">
+    <label for="langSelect">OCR Language:</label>
+    <select id="langSelect">
+      <option value="eng">English</option>
+      <option value="swe">Swedish</option>
+      <option value="est">Estonian</option>
+    </select>
+    <br><br>
+    <button id="extractButton" disabled>Extract Text</button>
+    <div id="status" class="status hidden">Processing...</div>
+    <textarea id="extractedText" placeholder="Extracted text will appear here..." readonly></textarea>
+    <div class="button-group" style="margin-top:1rem;">
+      <button id="copyButton" disabled>Copy Text</button>
+      <button onclick="manageText('clean')">Clean</button>
+      <button onclick="manageText('uppercase')">UPPER</button>
+      <button onclick="manageText('lowercase')">lower</button>
+      <button onclick="downloadText()">Download .txt</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Translate Text</h3>
+    <div class="button-group">
+      <button onclick="translateText('sv')">→ Swedish</button>
+      <button onclick="translateText('et')">→ Estonian</button>
+      <button onclick="translateText('en')">→ English</button>
+    </div>
+  </div>
+</main>
+
+<footer>OCR Text Extractor — powered by Tesseract.js v5</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+// WAIT FOR DOM: Ensures HTML elements exist before running code
+document.addEventListener('DOMContentLoaded', () => {
+
+  // --- CONFIGURATION ---
+  const PRO_LANGS = ['nor', 'dan', 'fin', 'deu', 'fra', 'spa', 'por', 'nld', 'ita'];
+  let isProUser = localStorage.getItem('txtr_pro') === 'true';
+
+  // --- ELEMENT REFERENCES ---
+  const cameraButton = document.getElementById('cameraButton');
+  const uploadButton = document.getElementById('uploadButton');
+  const cameraInput = document.getElementById('cameraInput');
+  const fileInput = document.getElementById('fileInput');
+  const imagePreview = document.getElementById('imagePreview');
+  const noPreview = document.getElementById('noPreview');
+  const extractButton = document.getElementById('extractButton');
+  const statusDiv = document.getElementById('status');
+  const extractedText = document.getElementById('extractedText');
+  const copyButton = document.getElementById('copyButton');
+  const langSelect = document.getElementById('langSelect');
+  
+  let currentImageSrc = null;
+
+  // --- PRO UNLOCK LOGIC ---
+  function unlockPro() {
+    localStorage.setItem('txtr_pro', 'true');
+    isProUser = true;
+    alert('✅ Pro version unlocked!');
+  }
+  // Make it global so you can type unlockPro() in the console to test
+  window.unlockPro = unlockPro;
+
+  langSelect.addEventListener('change', (e) => {
+    const selected = e.target.value;
+    if (PRO_LANGS.includes(selected) && !isProUser) {
+      const proceed = confirm(
+        `⚠️ ${selected.toUpperCase()} is a Pro feature.\n\n` +
+        `Unlock all 12 languages for a one-time purchase?\n` +
+        `(Testing mode: Click OK to unlock instantly)`
+      );
+      if (proceed) {
+        unlockPro();
+      } else {
+        e.target.value = 'eng'; // Reset to free default
+      }
+    }
+  });
+
+  // --- BUTTON LOGIC ---
+  cameraButton.addEventListener('click', () => cameraInput.click());
+  uploadButton.addEventListener('click', () => fileInput.click());
+  cameraInput.addEventListener('change', handleFile);
+  fileInput.addEventListener('change', handleFile);
+
+  function handleFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      currentImageSrc = ev.target.result;
+      imagePreview.src = currentImageSrc;
+      imagePreview.classList.remove('hidden');
+      noPreview.classList.add('hidden');
+      extractButton.disabled = false;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // --- OCR LOGIC ---
+  async function extractText() {
+    if (!currentImageSrc) return;
+    const lang = langSelect.value;
+    statusDiv.textContent = 'Initializing OCR...';
+    statusDiv.classList.remove('hidden');
+    extractButton.disabled = true;
+    try {
+      const { data: { text } } = await Tesseract.recognize(currentImageSrc, lang, {
+        logger: m => {
+          if (m.status === 'loading tesseract core') statusDiv.textContent = 'Loading Core...';
+          if (m.status === 'initializing tesseract') statusDiv.textContent = 'Initializing...';
+          if (m.status === 'loading language traineddata') statusDiv.textContent = `Downloading ${lang} data...`;
+          if (m.status === 'recognizing text') statusDiv.textContent = `Scanning: ${Math.round(m.progress * 100)}%`;
+        }
+      });
+      const cleaned = text.replace(/\n\s*\n/g, '\n').replace(/\s{2,}/g, ' ').trim();
+      extractedText.value = cleaned;
+      copyButton.disabled = !cleaned.trim();
+      statusDiv.textContent = '✅ Extraction complete!';
+    } catch (err) {
+      statusDiv.textContent = '❌ ' + err.message;
+    } finally {
+      extractButton.disabled = false;
+    }
+  }
+  extractButton.addEventListener('click', extractText);
+
+  // --- TEXT MANAGEMENT ---
+  window.manageText = function(type) {
+    let t = extractedText.value;
+    if (!t) return;
+    if (type === 'clean') t = t.replace(/\n\s*\n/g, '\n').replace(/\s{2,}/g, ' ').trim();
+    extractedText.value = t;
+  };
+
+  function copyToClipboard() {
+    navigator.clipboard.writeText(extractedText.value);
+    copyButton.textContent = 'Copied!';
+    setTimeout(() => copyButton.textContent = 'Copy', 2000);
+  }
+  copyButton.addEventListener('click', copyToClipboard);
+
+  window.downloadText = function() {
+    const blob = new Blob([extractedText.value], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'txtr_output.txt';
+    a.click();
+  };
+
+  // --- TRANSLATION LOGIC ---
+  window.translateText = async function() {
+    let text = extractedText.value.trim();
+    if (!text) return alert('No text to translate.');
+    const target = document.getElementById('translateSelect').value;
+    
+    // MyMemory API expects format like "en|sv"
+    // We assume source is English or Auto-detect
+    let langPair = `en|${target}`;
+    if (target === 'en') langPair = `auto|en`;
+
+    if (text.length > 500) {
+      text = text.slice(0, 500);
+      alert('⚠️ Text truncated to 500 characters (Free API limit).');
+    }
+    statusDiv.textContent = 'Translating...';
+    statusDiv.classList.remove('hidden');
+    try {
+      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langPair}`);
+      const data = await res.json();
+      if (data.responseData.translatedText) {
+        extractedText.value = data.responseData.translatedText;
+        statusDiv.textContent = '✅ Translation done!';
+      } else {
+        statusDiv.textContent = '⚠️ Translation error.';
+      }
+    } catch (err) {
+      statusDiv.textContent = '❌ Translation failed: ' + err.message;
+    }
+  };
+
+  // --- SERVICE WORKER REGISTRATION ---
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('✅ SW Registered'))
+      .catch(err => console.error('SW Error:', err));
+  }
+
+});
+</script>
+</body>
+</html>

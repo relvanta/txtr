@@ -1,0 +1,30 @@
+{
+  "id": "txtr-app",
+  "name": "txtr",
+  "short_name": "txtr",
+  "description": "Extract, clean, and translate text from images.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f7f7",
+  "theme_color": "#ff6b6b",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+
+}
