@@ -796,6 +796,13 @@ input[type="file"] { display: none; }
       );
       const data = await res.json();
 
+      // NEW: Catch API rate limits and quota warnings
+      if (data.responseStatus === 429 || (data.responseData?.translatedText && data.responseData.translatedText.includes('MYMEMORY WARNING'))) {
+        showStatus(tStatus, '⚠️ Daily translation limit reached. Please try again tomorrow.', true);
+        return; // Halt execution so we don't overwrite the textarea
+      }
+
+      // Existing success logic
       if (data.responseData?.translatedText) {
         txtArea.value    = data.responseData.translatedText;
         copyBtn.disabled = false;
@@ -803,7 +810,6 @@ input[type="file"] { display: none; }
         updateOriginBadge();
         updateTranslateBtnStates(targetLang);
 
-        // Show restore button so user can get back to original easily
         restoreBtn.style.display = '';
         restoreBtn.disabled = false;
 
