@@ -1,91 +1,50 @@
-# OCR Text Extractor PWA for iphone
+# txtr — OCR & Translation
 
-A Progressive Web App (PWA) that lets you **take a photo or upload an image** from your library, extract text with OCR, clean and format it, and translate it between **English, Swedish, and Estonian** — all right from your browser or iPhone home screen.
+**Extract and translate text from any photo or document.** txtr is a lightweight, mobile-first Progressive Web App (PWA) that processes Optical Character Recognition (OCR) directly on your device. No accounts, no subscriptions, and it works completely offline.
 
----
+## ⚡ Features
 
-## Features
+* **On-Device OCR:** Powered by Tesseract.js, your images never leave your phone. Privacy is built-in by default.
+* **Offline First:** Install it to your home screen and use the core extraction tools without an internet connection.
+* **Smart Translation:** Translates exclusively from your original extracted text, preventing the compounding errors common in multi-step translations.
+* **Text Formatting Tools:** Instantly strip junk characters, normalize spacing, or toggle letter casing with one tap.
+* **Export Ready:** Copy directly to your clipboard or download as a `.txt` file.
 
-✅ **Take Photo or Upload Image**  
-– Separate buttons for camera and photo library.  
-– Works perfectly on iPhone and Android.  
+## 🛠 Tech Stack
 
-✅ **Offline-Ready (PWA)**  
-– Installable as a web app on mobile or desktop.  
-– Works offline for OCR and text management (translation needs internet).  
+* **Frontend:** Vanilla HTML, CSS, JavaScript
+* **OCR Engine:** [Tesseract.js](https://tesseract.projectnaptha.com/) (v5)
+* **Translation API:** MyMemory Translation API
+* **Architecture:** Mobile-first, portrait-oriented PWA
 
-✅ **Text Extraction**  
-– Uses [Tesseract.js v5](https://github.com/naptha/tesseract.js).  
-– Supports English, Swedish, Estonian OCR. 
+## 🚀 Installation & Usage
 
-✅ **Text Management**  
-– Clean up spaces and line breaks.  
-– Convert to uppercase/lowercase.  
-– Copy or download extracted text as `.txt`.
+txtr is built to be installed as a PWA. 
 
-✅ **Translation**  
-– Translates up to 500 characters using the free MyMemory API.  
-– Supports English ⇄ Swedish ⇄ Estonian.
+1.  Navigate to the live site on your mobile device.
+2.  Tap the share icon (iOS) or menu button (Android) and select **"Add to Home Screen"**.
+3.  Launch txtr from your home screen for a full-screen, native-like experience.
 
----
+### Local Development
 
-## 🛠️ Setup
-
-### 1. Clone the Repository
+To run the project locally, you just need to serve the directory. No build step required.
 
 ```bash
-
-git clone https://github.com/yourusername/ocr-text-extractor.git
-cd ocr-text-extractor
-```
-2. Project Structure
-
-ocr-text-extractor/
-│
-├── index.html          # Main App UI
-├── manifest.json       # PWA manifest
-├── sw.js               # Service Worker
-├── /icons/             # App icons for PWA
-│   ├── icon-192.png
-│   ├── icon-512.png
-│   ├── icon-maskable.png
-└── README.md
-
-
-Running Locally
-
-You can run it directly by opening index.html,
-but for full PWA support (service worker), use a local web server:
-
-Option 1 — Python
+# Using Python
 python3 -m http.server 8000
 
-Then open:
-http://localhost:8000
-Option 2 — VS Code Live Server Extension
+# Using Node.js
+npx serve .
 
-Just click “Go Live” in VS Code.
-Adding to Home Screen
-
-Visit your app URL in Safari on iPhone.
-Tap Share → Add to Home Screen.
-Launch it from your home screen — now it behaves like a native app.
-
-Dependencies
-
-Tesseract.js v5
-MyMemory Translation API
-
-Roadmap
-Add auto language detection before OCR
-Add multi-page OCR batch mode
-Add dark mode toggle
-Add export to PDF
+```
+## 💎 Pro Version
+The base version includes English, Swedish, and Estonian OCR. A one-time purchase of $3 unlocks the Pro Language Pack, granting access to 9 additional offline OCR languages:
+ * Norwegian, Danish, Finnish, German, French, Spanish, Portuguese, Dutch, and Italian.
+## 📝 License
+This project is licensed under the MIT License
 
 Author
 Lukas Benneberg
-GitHub: @benneberg
+GitHub: @relvanta
 
 
-License
-This project is licensed under the MIT License
