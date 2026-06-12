@@ -474,20 +474,21 @@ input[type="file"] { display: none; }
         <span id="currentLangLabel" style="display:none;">→ showing: <span id="currentLangName"></span></span>
       </div>
 
-      <textarea id="extractedText" placeholder="Extracted text appears here after you run OCR on an image."></textarea>
+<textarea id="extractedText" readonly placeholder="Extracted text appears here after you run OCR on an image."></textarea>
 
-      <div class="card">
-        <span class="card-label">Text Tools</span>
-        <div class="btn-grid">
-          <button id="copyButton" class="accent" disabled>Copy</button>
-          <button id="restoreButton" class="outline" disabled style="display:none;">↩ Original</button>
-          <button class="outline" onclick="manageText('stripJunk')">✨ Strip Garbage</button>
-          <button onclick="manageText('clean')">Normalize Spaces</button>
-          <button onclick="manageText('uppercase')">UPPERCASE</button>
-          <button onclick="manageText('lowercase')">lowercase</button>
-          <button onclick="downloadText()">Export .txt</button>
-        </div>
-      </div>
+<div class="card">
+  <span class="card-label">Text Tools</span>
+  <div class="btn-grid">
+    <button id="toggleEditBtn" class="outline">✏️ Enable Editing</button>
+    <button id="copyButton" class="accent" disabled>Copy</button>
+    <button id="restoreButton" class="outline" disabled style="display:none;">↩ Original</button>
+    <button class="outline" onclick="manageText('stripJunk')">✨ Strip Garbage</button>
+    <button onclick="manageText('clean')">Normalize Spaces</button>
+    <button onclick="manageText('uppercase')">UPPERCASE</button>
+    <button onclick="manageText('lowercase')">lowercase</button>
+    <button onclick="downloadText()">Export .txt</button>
+  </div>
+</div>
 
     </div>
 
@@ -592,6 +593,7 @@ input[type="file"] { display: none; }
   const infoToggle    = $('infoToggle');
   const infoPanel     = $('infoPanel');
   const translateBtns = $('translateButtons');
+  const toggleEditBtn = $('toggleEditBtn');
 
   // ── Tab switching ──────────────────────────────────────────
   document.querySelectorAll('.tab').forEach(tab => {
@@ -849,7 +851,20 @@ input[type="file"] { display: none; }
     if (type === 'lowercase') t = t.toLowerCase();
     txtArea.value = t;
   };
-
+toggleEditBtn.addEventListener('click', () => {
+  if (txtArea.hasAttribute('readonly')) {
+    txtArea.removeAttribute('readonly');
+    toggleEditBtn.textContent = '🔒 Lock Text';
+    toggleEditBtn.classList.remove('outline');
+    toggleEditBtn.classList.add('accent');
+    txtArea.focus(); // Immediately bring up the keyboard
+  } else {
+    txtArea.setAttribute('readonly', 'true');
+    toggleEditBtn.textContent = '✏️ Enable Editing';
+    toggleEditBtn.classList.remove('accent');
+    toggleEditBtn.classList.add('outline');
+  }
+});
   copyBtn.addEventListener('click', () => {
     if (!txtArea.value) return;
     navigator.clipboard.writeText(txtArea.value).then(() => {
