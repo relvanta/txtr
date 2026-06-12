@@ -58,12 +58,15 @@ header {
   padding: 1.25rem var(--pad);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  padding-top: calc(1.25rem + env(safe-area-inset-top));
 }
 .logo-row {
   display: flex;
   align-items: center;
   gap: .6rem;
   margin-bottom: .35rem;
+  justify-content: space-between; /* Push logo left, info right */
+  width: 100%;
 }
 .logo-mark {
   width: 30px; height: 30px;
@@ -88,7 +91,27 @@ header {
   line-height: 1.4;
   padding-left: calc(30px + .6rem);
 }
-
+.info-icon-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: serif; /* Gives 'i' a classic look */
+  font-size: 1rem;
+  font-weight: bold;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0; margin: 0;
+  line-height: 1;
+}
+.info-icon-btn:active {
+  background: #1a1a1a;
+  transform: scale(0.95);
+  border-color: var(--accent);
+  color: var(--accent);
+}
 /* ── Main ── */
 main {
   flex: 1;
@@ -283,7 +306,15 @@ textarea::placeholder { color: #444; }
   line-height: 1.5;
 }
 .tip p strong { color: var(--text); }
-
+.tips-sheet {
+  border-bottom: none;
+  padding: 1.5rem 1.25rem calc(2rem + env(safe-area-inset-bottom));
+}
+.tips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}  
 /* info toggle button */
 .info-toggle {
   display: flex;
@@ -346,7 +377,22 @@ textarea::placeholder { color: #444; }
   grid-template-columns: 1fr 1fr;
   gap: .75rem;
 }
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.modal-header h2 { margin: 0; } /* Reset heading margin */
 
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.75rem;
+  padding: 0;
+  cursor: pointer;
+}
 /* ── Tab bar ── */
 nav.tabs {
   display: grid;
@@ -381,6 +427,7 @@ input[type="file"] { display: none; }
     <div class="logo-row">
       <div class="logo-mark">tx</div>
       <span class="logo-name">txtr</span>
+        <button class="info-icon-btn" id="headerInfoBtn" aria-label="Tips">i</button>
     </div>
     <p class="logo-sub">Extract and translate text from camera and documents</p>
   </header>
@@ -423,46 +470,7 @@ input[type="file"] { display: none; }
         </select>
         <button id="extractButton" class="accent" disabled>Extract Text ⚡</button>
       </div>
-
-      <!-- Tips info toggle -->
-      <div class="info-toggle-row">
-        <button class="info-toggle" id="infoToggle">ⓘ Tips for better results</button>
-      </div>
-
-      <div id="infoPanel" class="info-panel">
-        <h4>How to get the best results</h4>
-        <div class="tip">
-          <div class="tip-icon">☀️</div>
-          <p><strong>Good lighting matters most.</strong> Take photos in bright, even light. Avoid shadows across the text.</p>
-        </div>
-        <div class="tip">
-          <div class="tip-icon">🎨</div>
-          <p><strong>Contrast is key.</strong> Tesseract works best with dark text on a light background, or light text on a dark background. Low contrast (grey on grey) produces poor results.</p>
-        </div>
-        <div class="tip">
-          <div class="tip-icon">📐</div>
-          <p><strong>Hold the camera straight.</strong> Angled or skewed text is harder to read. Try to photograph text face-on.</p>
-        </div>
-        <div class="tip">
-          <div class="tip-icon">🔍</div>
-          <p><strong>Get close enough.</strong> Text should be clearly legible in the photo. If you have to squint to read it, so does the OCR engine.</p>
-        </div>
-        <div class="tip">
-          <div class="tip-icon">🖋</div>
-          <p><strong>Printed text works best.</strong> Handwriting is much harder to read accurately, especially cursive. Block handwriting works reasonably well.</p>
-        </div>
-        <div class="tip">
-          <div class="tip-icon">🌐</div>
-          <p><strong>Select the right language.</strong> The OCR engine uses language-specific patterns. If your text is in Swedish, select Swedish — even if you plan to translate it afterward.</p>
-        </div>
-        <div class="tip">
-          <div class="tip-icon">✂️</div>
-          <p><strong>Crop out noise.</strong> If the image has a lot of background clutter, crop it first so the text fills most of the frame.</p>
-        </div>
-      </div>
-
       <div id="captureStatus" class="status hidden">Ready</div>
-
     </div>
 
     <!-- ── VIEW 2: EDIT ── -->
@@ -542,6 +550,26 @@ input[type="file"] { display: none; }
     </div>
   </div>
 </div>
+<!-- Info modal -->
+  <div id="tipsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+  <div class="modal-sheet tips-sheet">
+    <div class="modal-header">
+      <h2>How to get the best results</h2>
+      <button class="modal-close-btn" id="tipsCloseBtn">&times;</button>
+    </div>
+    
+    <div class="tips-list">
+        <div class="tip">
+          <div class="tip-icon">☀️</div>
+          <p><strong>Good lighting matters most.</strong> Take photos in bright, even light. Avoid shadows across the text.</p>
+        </div>
+        <div class="tip">
+          <div class="tip-icon">🎨</div>
+          <p><strong>Contrast is key.</strong> Tesseract works best with dark text on a light background, or light text on a dark background.</p>
+        </div>
+        </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
@@ -586,14 +614,15 @@ input[type="file"] { display: none; }
   const proUnlockBtn  = $('proUnlockBtn');
   const proCloseBtn   = $('proCloseBtn');
   const tStatus       = $('translateStatus');
-  const originBadge   = $('originBadge');
+  //const originBadge   = $('originBadge');
   const originLangLbl = $('originLangLabel');
   const currentLangWrap = $('currentLangLabel');
   const currentLangName = $('currentLangName');
-  const infoToggle    = $('infoToggle');
-  const infoPanel     = $('infoPanel');
   const translateBtns = $('translateButtons');
   const toggleEditBtn = $('toggleEditBtn');
+  const tipsModal     = $('tipsModal');
+  const tipsOpenBtn   = $('headerInfoBtn');
+  const tipsCloseBtn  = $('tipsCloseBtn');
 
   // ── Tab switching ──────────────────────────────────────────
   document.querySelectorAll('.tab').forEach(tab => {
@@ -613,11 +642,15 @@ input[type="file"] { display: none; }
     if (tab) tab.classList.add('active');
   }
 
-  // ── Info toggle ────────────────────────────────────────────
-  infoToggle.addEventListener('click', () => {
-    const open = infoPanel.classList.toggle('open');
-    infoToggle.classList.toggle('open', open);
-    infoToggle.textContent = open ? 'ⓘ Hide tips' : 'ⓘ Tips for better results';
+  // ── Modal Handling Helpers ──────────────────────────────────────────────
+  function openModal(modalEl) { modalEl.classList.remove('hidden'); }
+  function closeModal(modalEl) { modalEl.classList.add('hidden'); }
+
+  // ── Tips Modal ───────────────────────────────────────────
+  tipsOpenBtn.addEventListener('click', () => openModal(tipsModal));
+  tipsCloseBtn.addEventListener('click', () => closeModal(tipsModal));
+  tipsModal.addEventListener('click', e => { 
+    if (e.target === tipsModal) closeModal(tipsModal); 
   });
 
   // ── Status helpers ─────────────────────────────────────────
